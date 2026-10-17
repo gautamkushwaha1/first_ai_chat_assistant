@@ -1,18 +1,26 @@
 from openai import OpenAI
+from dotenv import load_dotenv
+import os
+load_dotenv() #it looks for .env file and check for all envirnoment variable
 client = OpenAI(
-  base_url="http://127.0.0.1:11434/v1",
-  api_key="ollama"
+  base_url=os.getenv("BASE_URL"),
+  api_key=os.getenv("API_KEY")
 )
 
-response = client.chat.completions.create(
-  model="qwen:latest",
-  messages=[
-    {
-      "role":"user",
-      "content":"hey,what's up !"
-    }
-  ]
+while True:
+  user_input = input("Gautam : ")
+  if user_input.lower() in ["exit", "bye","quit"]:
+    break
+  response = client.chat.completions.create(
+    model=os.getenv("MODEL"),
+    messages=[
+      {
+        "role":"user",
+        "content":user_input
+      }
+    ]
 
-)
+  )
+  
+  print("Assistant : " + response.choices[0].message.content)
 
-print(response)
