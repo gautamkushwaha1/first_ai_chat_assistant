@@ -7,9 +7,15 @@ client = OpenAI(
   api_key=os.getenv("API_KEY")
 )
 messages = []
+messages.append(
+  {
+    "role":"system",
+    "content":"act like a humble agent and respond always under 50 words"
+  }
+)
 while True:
   user_input = input("Gautam : ")
-  if user_input.lower() in ["exit", "bye","quit"]:
+  if (user_input.lower()).strip() in ["exit", "bye","quit"]:
     break
 
   messages.append(
