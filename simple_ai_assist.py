@@ -15,6 +15,8 @@ messages.append(
     "content":"act like a humble agent and respond always under 50 words"
   }
 )
+
+max_step = 10 # tool calling limit
 while True:
   user_input = input("Gautam : ")
   if (user_input.lower()).strip() in ["exit", "bye","quit"]:
@@ -26,22 +28,30 @@ while True:
       "content":user_input
     }
   )
-  response = client.chat.completions.create(
-    model=os.getenv("MODEL"),
-    messages=messages,
-    tools = Tools
-  )
+  
 
-  msg = response.choices[0].message
+  for steps in range(max_step) :
+    response = client.chat.completions.create(
+        model=os.getenv("MODEL"),
+        messages=messages,
+        tools = Tools
+      )
+    
+    msg = response.choices[0].message
 
-  if msg.tool_calls :
+    if not msg.tool_calls:
+      break
+
     messages.append(msg)
     for tool_call in msg.tool_calls:
       func_name = tool_call.function.name
-      func_args = json.loads(tool_call.function.arguments or "{}")
+      try:
+        func_args = json.loads(tool_call.function.arguments or "{}")
+        fn = fuction_name_to_function_map[func_name]
+        result = fn(**func_args)
+      except Exception as e:
+        result = f"error while running {func_name} : {e}"
 
-      fn = fuction_name_to_function_map[func_name]
-      result = fn(**func_args)
 
       messages.append(
         {
@@ -50,13 +60,19 @@ while True:
           "content":str(result)
         }
       )
-    # 2nd call to api
-    response = client.chat.completions.create(
-      model=os.getenv("MODEL"),
-      messages=messages
+  else:
+    fallback = "sorry , we could not finish this within step limit"  
+    messages.append({
+      "role" : "assistant",
+      "content":fallback
+    }
+      
     )
+    print("assistant + ", fallback)
+    continue
+    
 
-    msg = response.choices[0].message
+    
 
   messages.append(
     {
