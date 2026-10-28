@@ -1,8 +1,15 @@
+#standard libarary imports
+import os
+
+#third_party library imports
 from openai import OpenAI
 from dotenv import load_dotenv
-from tools import Tools , fuction_name_to_function_map
-import json
-import os
+
+#Local modules
+from tools import Tools , run_tools
+from utilities.utilities import log
+
+
 load_dotenv() #it looks for .env file and check for all envirnoment variable
 client = OpenAI(
   base_url=os.getenv("BASE_URL"),
@@ -42,22 +49,16 @@ while True:
     if not msg.tool_calls:
       break
 
+    log(f"Steps {steps + 1} : Model Requested {len(msg.tool_calls)}")
+
     messages.append(msg)
     for tool_call in msg.tool_calls:
-      func_name = tool_call.function.name
-      try:
-        func_args = json.loads(tool_call.function.arguments or "{}")
-        fn = fuction_name_to_function_map[func_name]
-        result = fn(**func_args)
-      except Exception as e:
-        result = f"error while running {func_name} : {e}"
-
-
+      result = run_tools(tool_call)       
       messages.append(
         {
           "role":"tool",
           "tool_id":tool_call.id,
-          "content":str(result)
+          "content":result
         }
       )
   else:
@@ -82,5 +83,5 @@ while True:
   )
   
   
-  print("Assistant : " + msg.content)
+  print("Assistant : " + (msg.content or ""))
 

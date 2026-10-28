@@ -1,5 +1,7 @@
 from datetime import datetime , date
 import requests
+import json
+from utilities.utilities import log
 
 def get_current_time():
   return datetime.now().strftime(" %B %d , %Y at %I:%M %p")
@@ -10,6 +12,7 @@ def get_current_date():
 def get_city_weather(city):
   url = f"https://wttr.in/{city}?format=3"
   response = requests.get(url,timeout = 10)
+  response.raise_for_status()
   return response.text
 
 def get_current_city():
@@ -21,7 +24,7 @@ Tools = [
     "type" : "function",
     "function" : {
       "name" : "get_current_city",
-      "description":"Return the current city",
+      "description":"Return the current city when words like 'my city' , 'my current city' presents ",
       "parameters" : {"type" : "object","properties" : {}}
     }
   },
@@ -54,7 +57,9 @@ Tools = [
             "type":"string",
             "description":"city to get the weather forcast"
           }
-        }
+        },
+        "required" : ["city"]
+
       }
     }
   }
@@ -66,3 +71,16 @@ fuction_name_to_function_map = {
   "get_city_weather":get_city_weather,
   "get_current_city" : get_current_city
 }
+
+def run_tools(tool_call):
+  func_name = tool_call.function.name
+  try:
+    func_args = json.loads(tool_call.function.arguments or "{}")
+    log(f" {func_name} -> {func_args}")
+    fn = fuction_name_to_function_map[func_name]
+    result = fn(**func_args)
+  except Exception as e:
+    result = f"error while running {func_name} : {e}"
+
+  log(f"  ---> {result}") 
+  return str(result)
