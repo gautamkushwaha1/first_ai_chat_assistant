@@ -1,6 +1,6 @@
 import os
 
-START_SEQUENCE = "\033[91m" # ansi code for red text
+START_SEQUENCE = "\033[90m" # ansi code for red text
 END_SEQUENCE = "\033[0m" #ansi code for white text
 
 
